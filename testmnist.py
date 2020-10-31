@@ -1,7 +1,8 @@
 import torch
 import torchvision
 import matplotlib.pyplot as plt
-
+import util
+import torch.nn.functional as F
 
 batch_size_test = 1000
 
@@ -38,3 +39,32 @@ PATH = "saves/model_after_weight_sharing.ptmodel"
 # Load
 model = torch.load(PATH)
 model.eval()
+
+print(model)
+util.print_model_parameters(model)
+
+
+
+
+
+def test():
+    device = torch.device('cpu')
+    model.eval()
+    test_loss = 0
+    correct = 0
+    with torch.no_grad():
+        for data, target in test_loader:
+            data, target = data.to(device), target.to(device)
+            output = model(data)
+            test_loss += F.nll_loss(output, target, reduction='sum').item() # sum up batch loss
+            pred = output.data.max(1, keepdim=True)[1] # get the index of the max log-probability
+            correct += pred.eq(target.data.view_as(pred)).sum().item()
+
+        test_loss /= len(test_loader.dataset)
+        accuracy = 100. * correct / len(test_loader.dataset)
+        print(f'Test set: Average loss: {test_loss:.4f}, Accuracy: {correct}/{len(test_loader.dataset)} ({accuracy:.2f}%)')
+    return accuracy
+
+
+accuracy = test()
+print(accuracy)
