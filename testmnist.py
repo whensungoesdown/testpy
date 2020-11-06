@@ -3,6 +3,7 @@ import torchvision
 import matplotlib.pyplot as plt
 import util
 import torch.nn.functional as F
+import torch.tensor
 
 batch_size_test = 1000
 
@@ -48,6 +49,10 @@ fig
 plt.show()
 
 
+
+
+#global fc3input
+
 #test
 def printnorm(self, input, output):
     # input is a tuple of packed inputs
@@ -55,19 +60,61 @@ def printnorm(self, input, output):
     print('Inside ' + self.__class__.__name__ + ' forward')
     print('')
     print('input: ', type(input))
-    print(input)
     print('input[0]: ', type(input[0]))
+    print(input)
     print('output: ', type(output))
-    print(output)
+    print('output[0]: ', type(output[0]))
+    print('output.data:', output.data)
+#    print('output[0].data:', output[0].data)
     print('')
     print('input size:', input[0].size())
     print('output size:', output.data.size())
     print('output norm:', output.data.norm())
 
+def printnorm_fc3_prune(self, input, output):
+    # input is a tuple of packed inputs
+    # output is a Tensor. output.data is the Tensor we are interested
+    print('Inside ' + self.__class__.__name__ + ' forward')
+    print('')
+    print('input: ', type(input))
+    print('input[0]: ', type(input[0]))
+    print(input)
+    print('output: ', type(output))
+    print('output[0]: ', type(output[0]))
+    print('output.data:', output.data)
+#    print('output[0].data:', output[0].data)
+    print('')
+    print('input size:', input[0].size())
+    print('output size:', output.data.size())
+    print('output norm:', output.data.norm())
+    print('!!!! copy tensor')
+    global fc3_prune_input
+    fc3_prune_input = input[0].clone().detach()
+
+def printnorm_fc3_orig(self, input, output):
+    # input is a tuple of packed inputs
+    # output is a Tensor. output.data is the Tensor we are interested
+    print('Inside ' + self.__class__.__name__ + ' forward')
+    print('')
+    print('input: ', type(input))
+    print('input[0]: ', type(input[0]))
+    print(input)
+    print('output: ', type(output))
+    print('output[0]: ', type(output[0]))
+    print('output.data:', output.data)
+#    print('output[0].data:', output[0].data)
+    print('')
+    print('input size:', input[0].size())
+    print('output size:', output.data.size())
+    print('output norm:', output.data.norm())
+    print('!!!! copy tensor')
+    global fc3_orig_input
+    fc3_orig_input = input[0].clone().detach()
+    
 
 model.fc1.register_forward_hook(printnorm)
 model.fc2.register_forward_hook(printnorm)
-model.fc3.register_forward_hook(printnorm)
+model.fc3.register_forward_hook(printnorm_fc3_prune)
 #
 
 
@@ -96,13 +143,31 @@ util.print_model_parameters(model_orig)
 
 model_orig.fc1.register_forward_hook(printnorm)
 model_orig.fc2.register_forward_hook(printnorm)
-model_orig.fc3.register_forward_hook(printnorm)
+model_orig.fc3.register_forward_hook(printnorm_fc3_orig)
 
 result_orig = model_orig(example_data[0])
 pred_orig = result_orig.data.max(1, keepdim=True)[1] # get the index of the max log-probability
 print("\noriginal model predict:")
 print(pred_orig)
 print("\n")
+
+
+
+
+
+#print('fc3input type:', type(fc3input))
+print('fc3_prune_input :', fc3_prune_input)
+print('fc3_orig_input :', fc3_orig_input)
+
+fc3_input_diffabs = torch.abs(fc3_orig_input - fc3_prune_input);
+
+print('fc3_input_diffabs :', fc3_input_diffabs)
+
+
+
+
+
+
 
 
 
