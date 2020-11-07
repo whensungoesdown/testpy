@@ -42,18 +42,18 @@ examples = enumerate(test_loader)
 batch_idx, (example_data, example_targets) = next(examples)
 
 
-fig = plt.figure()
-#for i in range(6):
-#  plt.subplot(2,3,i+1)
-for i in range(1):
-  plt.tight_layout()
-  plt.imshow(example_data[i][0], cmap='gray', interpolation='none')
-  plt.title("Ground Truth: {}".format(example_targets[i]))
-  plt.xticks([])
-  plt.yticks([])
-fig
-
-plt.show()
+#fig = plt.figure()
+##for i in range(6):
+##  plt.subplot(2,3,i+1)
+#for i in range(1):
+#  plt.tight_layout()
+#  plt.imshow(example_data[i][0], cmap='gray', interpolation='none')
+#  plt.title("Ground Truth: {}".format(example_targets[i]))
+#  plt.xticks([])
+#  plt.yticks([])
+#fig
+#
+#plt.show()
 
 
 
@@ -167,11 +167,11 @@ model.fc3.register_forward_hook(printnorm_fc3_prune)
 #
 
 
-result = model(example_data[0])
-pred = result.data.max(1, keepdim=True)[1] # get the index of the max log-probability
-print("\npruned model predict:")
-print(pred)
-print("\n")
+#result = model(example_data[0])
+#pred = result.data.max(1, keepdim=True)[1] # get the index of the max log-probability
+#print("\npruned model predict:")
+#print(pred)
+#print("\n")
 
 
 
@@ -194,47 +194,57 @@ model_orig.fc1.register_forward_hook(printnorm)
 model_orig.fc2.register_forward_hook(printnorm_fc2_orig)
 model_orig.fc3.register_forward_hook(printnorm_fc3_orig)
 
-result_orig = model_orig(example_data[0])
-pred_orig = result_orig.data.max(1, keepdim=True)[1] # get the index of the max log-probability
-print("\noriginal model predict:")
-print(pred_orig)
-print("\n")
+#result_orig = model_orig(example_data[0])
+#pred_orig = result_orig.data.max(1, keepdim=True)[1] # get the index of the max log-probability
+#print("\noriginal model predict:")
+#print(pred_orig)
+#print("\n")
 
 
 
+for i in range(1000):
+
+    result = model(example_data[i])
+    pred = result.data.max(1, keepdim=True)[1] # get the index of the max log-probability
+    
+    result_orig = model_orig(example_data[i])
+    pred_orig = result_orig.data.max(1, keepdim=True)[1] # get the index of the max log-probability
+    
+    
+    if pred == pred_orig:
+        #print('fc3input type:', type(fc3input))
+        #print('fc2_prune_input :', fc2_prune_input)
+        #print('fc2_orig_input :', fc2_orig_input)
+        
+        fc2_input_diffabs = torch.abs(fc2_orig_input - fc2_prune_input);
+        
+        #print('fc2_input_diffabs :', fc2_input_diffabs)
+        
+        
+        #fc3_input_diffabs_histc = torch.histc(fc3_input_diffabs, 100, 0, 100)
+        #print('fc3_input_diffabs_histc :', fc3_input_diffabs_histc)
+        
+        writer.add_histogram('fc2/prune_input', fc2_prune_input, global_step=example_targets[i], bins='tensorflow')
+        writer.add_histogram('fc2/orig_input', fc2_orig_input, global_step=example_targets[i], bins='tensorflow')
+        writer.add_histogram('fc2/input_diffabs', fc2_input_diffabs, global_step=example_targets[i], bins='tensorflow')
+        
+        
+        #print('fc3_prune_input :', fc3_prune_input)
+        #print('fc3_orig_input :', fc3_orig_input)
+        
+        fc3_input_diffabs = torch.abs(fc3_orig_input - fc3_prune_input);
+        
+        #print('fc3_input_diffabs :', fc3_input_diffabs)
+        
+        
+        #fc3_input_diffabs_histc = torch.histc(fc3_input_diffabs, 100, 0, 100)
+        #print('fc3_input_diffabs_histc :', fc3_input_diffabs_histc)
+        
+        writer.add_histogram('fc3/prune_input', fc3_prune_input, global_step=example_targets[i], bins='tensorflow')
+        writer.add_histogram('fc3/orig_input', fc3_orig_input, global_step=example_targets[i], bins='tensorflow')
+        writer.add_histogram('fc3/input_diffabs', fc3_input_diffabs, global_step=example_targets[i], bins='tensorflow')
 
 
-#print('fc3input type:', type(fc3input))
-print('fc2_prune_input :', fc2_prune_input)
-print('fc2_orig_input :', fc2_orig_input)
-
-fc2_input_diffabs = torch.abs(fc2_orig_input - fc2_prune_input);
-
-print('fc2_input_diffabs :', fc2_input_diffabs)
-
-
-#fc3_input_diffabs_histc = torch.histc(fc3_input_diffabs, 100, 0, 100)
-#print('fc3_input_diffabs_histc :', fc3_input_diffabs_histc)
-
-writer.add_histogram('fc2/prune_input', fc2_prune_input, bins='tensorflow')
-writer.add_histogram('fc2/orig_input', fc2_orig_input, bins='tensorflow')
-writer.add_histogram('fc2/input_diffabs', fc2_input_diffabs, bins='tensorflow')
-
-
-print('fc3_prune_input :', fc3_prune_input)
-print('fc3_orig_input :', fc3_orig_input)
-
-fc3_input_diffabs = torch.abs(fc3_orig_input - fc3_prune_input);
-
-print('fc3_input_diffabs :', fc3_input_diffabs)
-
-
-#fc3_input_diffabs_histc = torch.histc(fc3_input_diffabs, 100, 0, 100)
-#print('fc3_input_diffabs_histc :', fc3_input_diffabs_histc)
-
-writer.add_histogram('fc3/prune_input', fc3_prune_input, bins='tensorflow')
-writer.add_histogram('fc3/orig_input', fc3_orig_input, bins='tensorflow')
-writer.add_histogram('fc3/input_diffabs', fc3_input_diffabs, bins='tensorflow')
 writer.close()
 
 
