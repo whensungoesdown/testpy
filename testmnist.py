@@ -8,6 +8,10 @@ from torch.utils.tensorboard import SummaryWriter
 from torchvision import datasets, transforms
 
 
+
+torch.set_printoptions(profile="full")
+
+
 # Writer will output to ./runs/ directory by default
 writer = SummaryWriter()
 
@@ -36,6 +40,17 @@ model.eval()
 print(model)
 util.print_model_parameters(model)
 
+
+
+torch.set_printoptions(precision=2, sci_mode=False, linewidth=80)
+#print("---------weights begin ------------------------------------")
+#print("!!!!!model fc1 weight")
+#print(model.fc1.weight)
+#print("!!!!!model fc2 weight")
+#print(model.fc2.weight)
+#print("!!!!!model fc3 weight")
+#print(model.fc3.weight)
+#print("---------weights end ------------------------------------")
 
 
 examples = enumerate(test_loader)
@@ -178,8 +193,6 @@ model.fc3.register_forward_hook(printnorm_fc3_prune)
 
 
 
-
-
 # Specify a path
 PATH_ORIG = "saves/initial_model.ptmodel"
 
@@ -189,6 +202,25 @@ model_orig.eval()
 
 print(model_orig)
 util.print_model_parameters(model_orig)
+
+#print weights
+#for param in model_orig.parameters():
+#      print(param.data)
+#
+
+#torch.set_printoptions(edgeitems=768)
+
+torch.set_printoptions(precision=2, sci_mode=False, linewidth=80)
+#
+#print("---------weights begin ------------------------------------")
+#print("!!!!!model_orig fc1 weight")
+#print(model_orig.fc1.weight)
+#print("!!!!!model_orig fc2 weight")
+#print(model_orig.fc2.weight)
+#print("!!!!!model_orig fc3 weight")
+#print(model_orig.fc3.weight)
+#print("---------weights end ------------------------------------")
+
 
 model_orig.fc1.register_forward_hook(printnorm)
 model_orig.fc2.register_forward_hook(printnorm_fc2_orig)
