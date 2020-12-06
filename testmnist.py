@@ -1,4 +1,5 @@
 import torch
+import torch.nn as nn
 import torchvision
 import matplotlib.pyplot as plt
 import util
@@ -72,11 +73,42 @@ batch_idx, (example_data, example_targets) = next(examples)
 
 
 
+class LeNet_fc2(nn.Module):
+    def __init__(self, model):
+        super(LeNet_fc2, self).__init__()
+        self.model = model
+        self.part = nn.Sequential(
+             model.fc2,
+             )
+
+    def forward(self, x):
+        #x = self.part(x)
+        tmp = self.part(x)
+        print('before relu:')
+        print(tmp)
+        y = F.relu(tmp)
+        return y
+
+class LeNet_fc1(nn.Module):
+    def __init__(self, model):
+        super(LeNet_fc1, self).__init__()
+        self.model = model
+        self.part = nn.Sequential(
+             model.fc1,
+             )
+
+    def forward(self, x):
+        #x = self.part(x)
+        tmp = self.part(x)
+        print('before relu:')
+        print(tmp)
+        y = F.relu(tmp)
+        return y
 
 #global fc3input
 
 #test
-def printnorm(self, input, output):
+def printnorm_fc1_prune(self, input, output):
     # input is a tuple of packed inputs
     # output is a Tensor. output.data is the Tensor we are interested
     print('Inside ' + self.__class__.__name__ + ' forward')
@@ -92,6 +124,29 @@ def printnorm(self, input, output):
     print('input size:', input[0].size())
     print('output size:', output.data.size())
     print('output norm:', output.data.norm())
+
+def printnorm_fc1_orig(self, input, output):
+    # input is a tuple of packed inputs
+    # output is a Tensor. output.data is the Tensor we are interested
+    print('Inside ' + self.__class__.__name__ + ' forward')
+    print('')
+    print('input: ', type(input))
+    print('input[0]: ', type(input[0]))
+    print(input)
+    print('output: ', type(output))
+    print('output[0]: ', type(output[0]))
+    print('output.data:', output.data)
+#    print('output[0].data:', output[0].data)
+    print('')
+    print('input size:', input[0].size())
+    print('output size:', output.data.size())
+    print('output norm:', output.data.norm())
+
+    global fc1_orig_input
+    fc1_orig_input = input[0].clone().detach()
+    test_output = model_prune_only_fc1(fc1_orig_input)
+    print('prued model with original fc1 input:')
+    print(test_output)
 
 def printnorm_fc2_prune(self, input, output):
     # input is a tuple of packed inputs
@@ -116,6 +171,7 @@ def printnorm_fc2_prune(self, input, output):
 def printnorm_fc2_orig(self, input, output):
     # input is a tuple of packed inputs
     # output is a Tensor. output.data is the Tensor we are interested
+    print('inside: printnorm_fc2_orig')
     print('Inside ' + self.__class__.__name__ + ' forward')
     print('')
     print('input: ', type(input))
@@ -123,7 +179,8 @@ def printnorm_fc2_orig(self, input, output):
     print(input)
     print('output: ', type(output))
     print('output[0]: ', type(output[0]))
-    print('output.data:', output.data)
+    print('output.data:')
+    print(output.data)
 #    print('output[0].data:', output[0].data)
     print('')
     print('input size:', input[0].size())
@@ -133,6 +190,9 @@ def printnorm_fc2_orig(self, input, output):
     global fc2_orig_input
     fc2_orig_input = input[0].clone().detach()
 
+    test_output = model_prune_only_fc2(fc2_orig_input)
+    print('prued model with original fc2 input:')
+    print(test_output)
 
 
 def printnorm_fc3_prune(self, input, output):
@@ -176,7 +236,7 @@ def printnorm_fc3_orig(self, input, output):
     fc3_orig_input = input[0].clone().detach()
     
 
-model.fc1.register_forward_hook(printnorm)
+model.fc1.register_forward_hook(printnorm_fc1_prune)
 model.fc2.register_forward_hook(printnorm_fc2_prune)
 model.fc3.register_forward_hook(printnorm_fc3_prune)
 #
@@ -203,6 +263,15 @@ model_orig.eval()
 print(model_orig)
 util.print_model_parameters(model_orig)
 
+
+
+model_prune_only_fc1 = LeNet_fc1(model=model)
+print(model_prune_only_fc1)
+
+model_prune_only_fc2 = LeNet_fc2(model=model)
+print(model_prune_only_fc2)
+
+
 #print weights
 #for param in model_orig.parameters():
 #      print(param.data)
@@ -222,7 +291,7 @@ torch.set_printoptions(precision=2, sci_mode=False, linewidth=80)
 #print("---------weights end ------------------------------------")
 
 
-model_orig.fc1.register_forward_hook(printnorm)
+model_orig.fc1.register_forward_hook(printnorm_fc1_orig)
 model_orig.fc2.register_forward_hook(printnorm_fc2_orig)
 model_orig.fc3.register_forward_hook(printnorm_fc3_orig)
 
@@ -234,13 +303,15 @@ model_orig.fc3.register_forward_hook(printnorm_fc3_orig)
 
 
 
-for i in range(1000):
+for i in range(1):
+
+    result_orig = model_orig(example_data[i])
+    pred_orig = result_orig.data.max(1, keepdim=True)[1] # get the index of the max log-probability
+
 
     result = model(example_data[i])
     pred = result.data.max(1, keepdim=True)[1] # get the index of the max log-probability
     
-    result_orig = model_orig(example_data[i])
-    pred_orig = result_orig.data.max(1, keepdim=True)[1] # get the index of the max log-probability
     
     
     if pred == pred_orig:
